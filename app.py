@@ -1,125 +1,141 @@
-from flask import Flask, request, render_template_string
+from flask import Flask, request, redirect, session, render_template_string
 
 app = Flask(__name__)
+app.secret_key = "my_secret_key_123"
+
+USERS = {
+    "admin": "123",
+    "user": "456"
+}
 
 VIDEOS = [
-    {"title": "Nhạc chill buổi tối", "id": "5qap5aO4i9A", "channel": "Chillhop"},
-    {"title": "Video giải trí hot", "id": "xf1F5Frzzbg", "channel": "Entertainment"},
-    {"title": "Nhạc thư giãn học bài", "id": "I_3jF658WEY", "channel": "Study Music"},
-    {"title": "Lo-fi chill", "id": "DWcJFNfaw9c", "channel": "Lofi Girl"},
+    {"title": "Nhạc chill", "id": "5qap5aO4i9A"},
+    {"title": "Video giải trí", "id": "xf1F5Frzzbg"},
 ]
 
-HTML = """
+LOGIN_HTML = """
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>MyTube – Web Video</title>
+<title>Đăng nhập</title>
 <style>
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-}
-header {
+    font-family: Arial;
+    background: linear-gradient(135deg,#667eea,#764ba2);
     display: flex;
+    justify-content: center;
     align-items: center;
-    padding: 15px 25px;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(10px);
+    height: 100vh;
 }
-.logo {
-    font-size: 26px;
-    font-weight: bold;
-    color: #ff3c3c;
-}
-.search {
-    margin-left: 30px;
-    flex: 1;
-}
-.search input {
-    width: 100%;
-    padding: 12px 20px;
-    border-radius: 30px;
-    border: none;
-    font-size: 16px;
-}
-.container {
+.box {
+    background: white;
     padding: 30px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 25px;
+    border-radius: 12px;
+    width: 300px;
 }
-.card {
-    background: rgba(0,0,0,0.35);
-    border-radius: 18px;
-    padding: 12px;
-    transition: transform 0.3s, box-shadow 0.3s;
-}
-.card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
-}
-iframe {
+input,button {
     width: 100%;
-    height: 180px;
-    border-radius: 14px;
+    padding: 10px;
+    margin-top: 10px;
 }
-.title {
-    margin: 10px 0 4px;
-    font-weight: bold;
-    font-size: 16px;
-}
-.channel {
-    font-size: 14px;
-    color: #ddd;
-}
-footer {
-    text-align: center;
-    padding: 20px;
-    background: rgba(0,0,0,0.4);
-    margin-top: 20px;
-    font-size: 14px;
+button {
+    background: #667eea;
+    color: white;
+    border: none;
 }
 </style>
 </head>
-
 <body>
+<div class="box">
+<h2>Đăng nhập</h2>
+<form method="post">
+<input name="username" placeholder="Username" required>
+<input name="password" type="password" placeholder="Password" required>
+<button>Đăng nhập</button>
+<p style="color:red">{{error}}</p>
+</form>
+</div>
+</body>
+</html>
+"""
+
+HOME_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+<title>MyTube</title>
+<style>
+body { background:#111; color:white; font-family:Arial; margin:0 }
+header {
+    background:#202020;
+    padding:15px;
+    display:flex;
+    justify-content:space-between;
+}
+.container {
+    padding:20px;
+    display:grid;
+    grid-template-columns: repeat(auto-fill,minmax(300px,1fr));
+    gap:20px;
+}
+iframe { width:100%; height:180px; border-radius:10px }
+a { color:red; text-decoration:none }
+</style>
+</head>
+<body>
+
 <header>
-    <div class="logo">▶ MyTube</div>
-    <form class="search" method="get">
-        <input type="text" name="q" placeholder="🔍 Tìm kiếm video..." value="{{query}}">
-    </form>
+<div>▶ MyTube</div>
+<div>
+Xin chào <b>{{user}}</b> |
+<a href="/logout">Đăng xuất</a>
+</div>
 </header>
 
 <div class="container">
 {% for v in videos %}
-    <div class="card">
-        <iframe src="https://www.youtube.com/embed/{{v.id}}" allowfullscreen></iframe>
-        <div class="title">{{v.title}}</div>
-        <div class="channel">{{v.channel}}</div>
-    </div>
+<div>
+<iframe src="https://www.youtube.com/embed/{{v.id}}" allowfullscreen></iframe>
+<p>{{v.title}}</p>
+</div>
 {% endfor %}
 </div>
-
-<footer>
-    © 2026 MyTube | Web video demo bằng Python Flask
-</footer>
 
 </body>
 </html>
 """
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
+def login():
+    if "user" in session:
+        return redirect("/home")
+
+    error = ""
+    if request.method == "POST":
+        u = request.form["username"]
+        p = request.form["password"]
+        if u in USERS and USERS[u] == p:
+            session["user"] = u
+            return redirect("/home")
+        else:
+            error = "Sai tài khoản hoặc mật khẩu"
+
+    return render_template_string(LOGIN_HTML, error=error)
+
+@app.route("/home")
 def home():
-    q = request.args.get("q", "").lower()
-    if q:
-        filtered = [v for v in VIDEOS if q in v["title"].lower()]
-    else:
-        filtered = VIDEOS
-    return render_template_string(HTML, videos=filtered, query=q)
+    if "user" not in session:
+        return redirect("/")
+    return render_template_string(
+        HOME_HTML,
+        user=session["user"],
+        videos=VIDEOS
+    )
+
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    return redirect("/")
 
 if __name__ == "__main__":
     app.run()
-
