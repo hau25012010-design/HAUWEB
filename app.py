@@ -3,96 +3,109 @@ from flask import Flask, request, render_template_string
 app = Flask(__name__)
 
 VIDEOS = [
-    {
-        "title": "Video nhạc hot",
-        "id": "I_3jF658WEY",
-        "channel": "My Channel"
-    },
-    {
-        "title": "Video giải trí",
-        "id": "xf1F5Frzzbg",
-        "channel": "Entertainment"
-    },
-    {
-        "title": "Video chill",
-        "id": "5qap5aO4i9A",
-        "channel": "Chill Music"
-    }
+    {"title": "Nhạc chill buổi tối", "id": "5qap5aO4i9A", "channel": "Chillhop"},
+    {"title": "Video giải trí hot", "id": "xf1F5Frzzbg", "channel": "Entertainment"},
+    {"title": "Nhạc thư giãn học bài", "id": "I_3jF658WEY", "channel": "Study Music"},
+    {"title": "Lo-fi chill", "id": "DWcJFNfaw9c", "channel": "Lofi Girl"},
 ]
 
 HTML = """
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>YouTube Mini</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial;
-            background: #0f0f0f;
-            color: white;
-        }
-        header {
-            background: #202020;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-        }
-        header h2 {
-            margin: 0 20px 0 0;
-            color: red;
-        }
-        input {
-            flex: 1;
-            padding: 10px;
-            border-radius: 20px;
-            border: none;
-            font-size: 16px;
-        }
-        .container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
-        }
-        .video {
-            background: #181818;
-            padding: 10px;
-            border-radius: 12px;
-        }
-        iframe {
-            width: 100%;
-            height: 180px;
-            border-radius: 10px;
-        }
-        .title {
-            font-weight: bold;
-            margin: 8px 0 4px;
-        }
-        .channel {
-            color: #aaa;
-            font-size: 14px;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>MyTube – Web Video</title>
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+header {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+}
+.logo {
+    font-size: 26px;
+    font-weight: bold;
+    color: #ff3c3c;
+}
+.search {
+    margin-left: 30px;
+    flex: 1;
+}
+.search input {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 30px;
+    border: none;
+    font-size: 16px;
+}
+.container {
+    padding: 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+}
+.card {
+    background: rgba(0,0,0,0.35);
+    border-radius: 18px;
+    padding: 12px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+}
+iframe {
+    width: 100%;
+    height: 180px;
+    border-radius: 14px;
+}
+.title {
+    margin: 10px 0 4px;
+    font-weight: bold;
+    font-size: 16px;
+}
+.channel {
+    font-size: 14px;
+    color: #ddd;
+}
+footer {
+    text-align: center;
+    padding: 20px;
+    background: rgba(0,0,0,0.4);
+    margin-top: 20px;
+    font-size: 14px;
+}
+</style>
 </head>
-<body>
 
+<body>
 <header>
-    <h2>▶ YouTube Mini</h2>
-    <form method="get" style="flex:1;">
-        <input type="text" name="q" placeholder="Tìm kiếm" value="{{query}}">
+    <div class="logo">▶ MyTube</div>
+    <form class="search" method="get">
+        <input type="text" name="q" placeholder="🔍 Tìm kiếm video..." value="{{query}}">
     </form>
 </header>
 
 <div class="container">
 {% for v in videos %}
-    <div class="video">
+    <div class="card">
         <iframe src="https://www.youtube.com/embed/{{v.id}}" allowfullscreen></iframe>
         <div class="title">{{v.title}}</div>
         <div class="channel">{{v.channel}}</div>
     </div>
 {% endfor %}
 </div>
+
+<footer>
+    © 2026 MyTube | Web video demo bằng Python Flask
+</footer>
 
 </body>
 </html>
@@ -109,3 +122,4 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
